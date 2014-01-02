@@ -1,11 +1,4 @@
-db-nodejs
-==========
-
-DB classes for node JS
-
-
-## Usage
-```js
+var DB = require("./DB");
 var DBDIR = "./";
 var arr = {};
 var warr = {};
@@ -16,10 +9,10 @@ var tablename = "testtbl";
 var test = new DB(DBDIR + dbname, tablename);
 
 test.debugquery = true;
+// test.defaultschema = false; //add id and timestamp when true and default.
 
 // CREATE TABLE
 var schema = {};
-schema["id"] = "INTEGER PRIMARY KEY AUTOINCREMENT";
 schema["testint"] = "INTEGER";
 schema["testtxt"] = "TEXT";
 
@@ -37,18 +30,18 @@ test.drop(function() {
 		data.testint = "789";
 		data.testtxt = "ghi";
 		test.insert(data)
-		
+
 		// SELECT
 		var where = {}
 		where.testint = "789";
 		test.select(where, function(r) {
-			test.c(r)
+			DB.c(r)
+			DB.c(test.defaultschema)
 		})
-		
+
 		// SELECT ALL
 		test.selectall(function(r) {
 			test.c(r)
 		})
 	});
 });
-```
