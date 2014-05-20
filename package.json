@@ -1,9 +1,11 @@
 {
-  "name": "db-nodejs",
-  "version": "0.0.0",
+  "name": "db-node",
+  "version": "0.0.1",
   "description": "DB wrapper which enable to use Relational DataBase without SQL.",
   "main": "DB.js",
-  "dependencies": "sqlite3",
+  "dependencies": {
+    "sqlite3": ""
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -15,10 +17,18 @@
     "node",
     "db"
   ],
-  "author": "seiryow",
+  "author": {
+    "name": "seiryow"
+  },
   "license": "BSD-2-Clause",
   "bugs": {
     "url": "https://github.com/seiryow/db-nodejs/issues"
   },
-  "homepage": "https://github.com/seiryow/db-nodejs.JS"
+  "homepage": "https://github.com/seiryow/db-nodejs.JS",
+  "readme": "db-nodejs\r\n==========\r\n\r\nDB classes for node JS\r\n\r\n\r\n## Usage\r\n```js\r\nvar DBDIR = \"./\";\r\nvar arr = {};\r\nvar warr = {};\r\nvar dbname = \"./tesat.db\";\r\nvar tablename = \"testtbl\";\r\n\r\n// CONNECT DB\r\nvar test = new DB(DBDIR + dbname, tablename);\r\n\r\ntest.debugquery = true;\r\n\r\n// CREATE TABLE\r\nvar schema = {};\r\nschema[\"id\"] = \"INTEGER PRIMARY KEY AUTOINCREMENT\";\r\nschema[\"testint\"] = \"INTEGER\";\r\nschema[\"testtxt\"] = \"TEXT\";\r\n\r\ntest.drop(function() {\r\n\ttest.create(schema, function() {\r\n\r\n\t\t// INSERT\r\n\t\tvar data = {}\r\n\t\tdata.testint = \"123\";\r\n\t\tdata.testtxt = \"abc\";\r\n\t\ttest.insert(data)\r\n\t\tdata.testint = \"456\";\r\n\t\tdata.testtxt = \"def\";\r\n\t\ttest.insert(data)\r\n\t\tdata.testint = \"789\";\r\n\t\tdata.testtxt = \"ghi\";\r\n\t\ttest.insert(data)\r\n\t\t\r\n\t\t// SELECT\r\n\t\tvar where = {}\r\n\t\twhere.testint = \"789\";\r\n\t\ttest.select(where, function(r) {\r\n\t\t\ttest.c(r)\r\n\t\t})\r\n\t\t\r\n\t\t// SELECT ALL\r\n\t\ttest.selectall(function(r) {\r\n\t\t\ttest.c(r)\r\n\t\t})\r\n\t});\r\n});\r\n```",
+  "readmeFilename": "README.md",
+  "_id": "db-node@0.0.1",
+  "_shasum": "774a89c2c76689e22b12b5fea089251edb9076a5",
+  "_from": "db-node@",
+  "_resolved": "https://registry.npmjs.org/db-node/-/db-node-0.0.1.tgz"
 }

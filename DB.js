@@ -5,11 +5,31 @@ function c(s) {
 
 var DB = {};
 
-//DB.prototype.defaultschema = true;
+// DB.prototype.defaultschema = true;
 DB = function(dbfile, table) {
 	this.db = new sqlite3.Database(dbfile);
-	this.table = table;
+	if (1 < arguments.length) {
+		this.table = table;
+	}
 	this.debugquery = false;
+	this.show_tables = function(func) {
+		var q = "select name from sqlite_master where type = 'table';";
+		this.db.all(q, function(err, rows) {
+			if (!err) {
+				// c(rows);
+				if (func) {
+					func(rows);
+				}
+			} else {
+				c("error select");
+				if (efunc) {
+					efunc(err);
+				} else {
+					c(err);
+				}
+			}
+		});
+	};
 	this.drop = function(func) {
 		this.db.run("DROP TABLE " + this.table, func);
 	};
@@ -30,7 +50,7 @@ DB = function(dbfile, table) {
 		c(this.defaultschema);
 		var q = "CREATE TABLE " + this.table + "(";
 		var qarr = [];
-		if(this.defaultschema){
+		if (this.defaultschema) {
 			qarr.push("id INTEGER PRIMARY KEY AUTOINCREMENT")
 		}
 		for ( var k in arr) {
@@ -38,7 +58,7 @@ DB = function(dbfile, table) {
 				qarr.push(k + " " + arr[k])
 			}
 		}
-		if(this.defaultschema){
+		if (this.defaultschema) {
 			qarr.push("timestamp VARCHAR(19) DEFAULT (datetime())")
 		}
 		q += qarr.join(",");
@@ -60,9 +80,20 @@ DB = function(dbfile, table) {
 		}
 		var cl = col.join(",");
 		var vl = val.join(",");
-		q += cl + ") VALUES (" + vl + ")";
+		q += cl + ") VALUES (" + vl + ");";
 		// c(q);
-		this.run(q, func);
+		// this.run(q, func);
+
+		var my = this;
+		this.run(q, function() {
+			my.max("id", function(rows) {
+				var warr = {};
+				warr.id = rows[0]["MAX(id)"];
+				// warr.id = ""+rows[0]["MAX(id)"];
+				c(rows[0]["MAX(id)"]);
+				my.select(warr, func);
+			});
+		});
 	};
 	this.update = function(arr, warr, func) {
 		var q = "UPDATE " + this.table + " SET ";
@@ -80,7 +111,11 @@ DB = function(dbfile, table) {
 			q += " WHERE ";
 			q += qwarr.join(" AND ");
 		}
-		this.run(q, func);
+		// this.run(q, func);
+		var my = this;
+		this.run(q, function() {
+			my.select(warr, func);
+		});
 	};
 	this.del = function(warr, func) {
 		var q = "DELETE from " + this.table + " ";
@@ -91,7 +126,10 @@ DB = function(dbfile, table) {
 		}
 		q += " WHERE ";
 		q += qwarr.join(" AND ");
-		this.run(q, func);
+		var my = this;
+		this.run(q, function() {
+			my.select(warr, func);
+		});
 	};
 	this.selectcond = {};
 	this.select = function(warr, func, efunc) {
@@ -102,11 +140,22 @@ DB = function(dbfile, table) {
 			if (k == this.selectcond) {
 				qwarr.push(" " + warr[k] + " ");
 			} else {
-				qwarr.push(k + " = '" + warr[k] + "'");
+				// if (typeof warr[k] == "String") {
+				var datastr = "" + warr[k];
+				var res = datastr.replace(new RegExp("\\*", 'g'), "%");
+				if(datastr==""){
+					qwarr.push(k + " is null");
+				}else if (res == datastr) {
+					qwarr.push(k + " = '" + warr[k] + "'");
+				} else {
+					qwarr.push(k + " LIKE '" + res + "'");
+				}
 			}
 		}
-		q += " WHERE ";
-		q += qwarr.join(" AND ");
+		if (qwarr.length !== 0) {
+			q += " WHERE ";
+			q += qwarr.join(" AND ");
+		}
 
 		if (this.debugquery) {
 			c(q);
@@ -114,6 +163,28 @@ DB = function(dbfile, table) {
 		this.db.all(q, function(err, rows) {
 			if (!err) {
 				// c(rows);
+				if (func) {
+					func(rows);
+				}
+			} else {
+				c("error select");
+				if (efunc) {
+					efunc(err);
+				} else {
+					c(err);
+				}
+			}
+		});
+	};
+	this.max = function(col, func, efunc) {
+		var q = "SELECT MAX(" + col + ") FROM " + this.table + " ";
+
+		if (this.debugquery) {
+			c(q);
+		}
+		this.db.all(q, function(err, rows) {
+			c(rows);
+			if (!err) {
 				if (func) {
 					func(rows);
 				}
@@ -147,7 +218,25 @@ DB = function(dbfile, table) {
 			}
 		});
 	};
-
+	this.schema = function(func, efunc) {
+		var q = "PRAGMA table_info(" + this.table + ")";
+		if (this.debugquery) {
+			c(q);
+		}
+		this.db.all(q, function(err, rows) {
+			if (!err) {
+				// c(rows);
+				func(rows);
+			} else {
+				c("error select");
+				if (efunc) {
+					efunc(err);
+				} else {
+					c(err);
+				}
+			}
+		});
+	};
 	this.each = function(arr, func) {
 		for ( var k in arr) {
 			if (arr.hasOwnProperty(k)) {
@@ -157,7 +246,9 @@ DB = function(dbfile, table) {
 	};
 }
 DB.prototype.defaultschema = true;
-
+String.prototype.replaceAll = function(find, replace) {
+	// return this.replace(new RegExp(find, 'g'), replace);
+}
 DB.prototype.c = function(s) {
 	console.log(s);
 }
@@ -165,7 +256,7 @@ module.exports = DB;
 module.exports.c = function(s) {
 	console.log(s);
 }
-//module.exports.defaultschema = true;
+// module.exports.defaultschema = true;
 
 module.exports.each = function(arr, func) {
 	for ( var k in arr) {
